@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from pprint import pprint
 
 commands = {"lvds_on": "ON LVDS Channel", "lvds_off": "OFF LVDS Channel"}
@@ -77,6 +78,10 @@ for name in pulse_names:
     pulse_list.append(Pulse(name, pulse_definition[name]))
     pulse_dic.update({name: Pulse(name, pulse_definition[name])})
 
-pprint(pulse_dic)
+print(pulse_queue.definition)
+print(pulse_queue.definition["Start Time"].min())
+print(pulse_queue.definition["End Time"].max())
 
-pprint(pulse_dic["Pulse_1"])
+x_range = np.arange(0,pulse_queue.definition["End Time"].max())
+plt.plot(x_range, np.zeros(len(x_range)))
+plt.show()
