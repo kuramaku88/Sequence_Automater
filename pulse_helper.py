@@ -58,34 +58,6 @@ def load_channels(pulse_queue, pulse_dic, ch_no=28):
         ch = ch+ 1
     return channels
 
-
-# def channel_plotter(channels, n = 28):
-#     fig = plt.figure(figsize=(12,2.5*n))
-#     ch_ct = 1
-
-#     # Creates a color map to ensure that each plot has a different color
-#     col_lin = np.linspace(0, 1, n)
-#     np.random.seed(42)
-#     np.random.shuffle(col_lin)
-#     color = iter(plt.cm.rainbow(col_lin))
-
-#     # Loops through each channel and plots the waveform for the channel
-#     # I have fixed it, but I think I can improve on how I have written it
-#     for ch in channels[:n]:
-#         ax = plt.subplot(n, 1, ch_ct)
-#         c = next(color)
-#         for i in timeline_merge(ch.timeline):
-#             ax.plot([i[0], i[0]+i[1]], np.zeros_like(i)+1, color = c)
-#             for ch_vert in (i[0], i[0]+i[1]):
-#                 ax.axvline(ch_vert, 0.0, 0.91,  color = c)
-#             ax.grid(True)
-#             ax.set_ylim(0,1.1)
-#             ax.set_xlim(0, 1000)
-#             ax.set_ylabel("Ch_"+str(ch_ct-1))
-#             # ax.set_title("Channel"+str(ch_ct-1))
-#         ch_ct+=1 # Append the channel number
-#     plt.show()
-
 def channel_plotter(channels, n = 28):
     ch_ct = 0
     # Creates a color map to ensure that each plot has a different color
