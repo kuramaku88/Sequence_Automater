@@ -9,7 +9,6 @@ file_name = "Pulse_Manager.xlsx"
 sheet_1 = "Pulse_Queue"
 sheet_2 = "Pulse_Definition"
 
-# pulse_queue = pd.read_excel(file_name, sheet_name=sheet_1)
 pulse_definition = pd.read_excel(file_name, sheet_name=sheet_2)
 pulse_names = pulse_definition.columns[1:]
 pulse_list = []
@@ -44,6 +43,3 @@ for command in combined:
         print(channel_on_off("Turn on channels", "DIO_1", str(off_time(channels)[str(i)]), "off", str(command_delay)))
     delay = delay +command[0] - old
     old = command[0]
-
-for j in combined:
-    print(j)
