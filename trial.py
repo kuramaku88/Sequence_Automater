@@ -1,10 +1,11 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from pprint import pprint
 
 commands = {"lvds_on": "ON LVDS Channel", "lvds_off": "OFF LVDS Channel"}
 channels = np.zeros(28)
+on = 1
+off = 0
 
 
 class Pulse:
@@ -78,10 +79,12 @@ for name in pulse_names:
     pulse_list.append(Pulse(name, pulse_definition[name]))
     pulse_dic.update({name: Pulse(name, pulse_definition[name])})
 
-print(pulse_queue.definition)
-print(pulse_queue.definition["Start Time"].min())
-print(pulse_queue.definition["End Time"].max())
+data = pd.read_excel(file_name, sheet_name=sheet_1)
 
-x_range = np.arange(0,pulse_queue.definition["End Time"].max())
+for index, row in pulse_queue.definition.iterrows():
+    print(row["Pulse_Name"], row["Start Time"], row["End Time"])
+
+
+x_range = np.arange(0, pulse_queue.definition["End Time"].max())
 plt.plot(x_range, np.zeros(len(x_range)))
 plt.show()
