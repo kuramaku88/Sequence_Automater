@@ -1,4 +1,5 @@
 import numpy as np
+
 class Pulse:
     def __init__(self, name, definition):
         self.name = name
