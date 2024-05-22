@@ -95,6 +95,7 @@ def channel_plotter(channels: list[Channel], n=28):
     plt.show()
 
 
+# TODO: rename this function and write documentation cuz gawddamn this name is confusing
 def on_time(channels: list[Channel]) -> dict[str : list[int]]:
     ontime = {}
     ch = 0
@@ -126,16 +127,4 @@ def off_time(channels: list[Channel]) -> dict[str : list[int]]:
 def channel_on_off(
     name: str, engine: str, channels: list[int], on_off: str, delay=10
 ) -> str:
-    return (
-        'hvis.sync_while("'
-        + name
-        + '",'
-        + engine
-        + ","
-        + channels
-        + ',"'
-        + on_off
-        + '", delay='
-        + delay
-        + ")"
-    )
+    return f'hvis.sync_while("{name}",{engine},{channels},"{on_off}", delay={delay}'

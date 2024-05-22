@@ -20,6 +20,8 @@ for name in pulse_names:
     pulse_list.append(Pulse(name, pulse_definition[name]))
     pulse_dic.update({name: Pulse(name, pulse_definition[name])})
 
+# TODO: rewrite this function with pandas by querying through both of the sheets simultaneously
+#  (Istg even though you have to write borderline sql it's prolly way way easier than what we have rn)
 channels = load_channels(pulse_queue, pulse_dic, 28)
 
 on = np.sort(np.array(list(on_time(channels).keys()), dtype=int))

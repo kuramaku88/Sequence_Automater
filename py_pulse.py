@@ -49,11 +49,11 @@ class Pulse_Queue:
 class Channel:
     def __init__(
         self, timeline: list() = np.array([]), sweep_timeline: list() = np.array([])
-    ):
+    ) -> None:
         self.timeline = timeline
         self.sweep_timeline = sweep_timeline
 
-    def append_timeline(self, pulse_time, sweep_enable):
+    def append_timeline(self, pulse_time: np.ndarray, sweep_enable: int) -> None:
         """
         Appends a given tuple of start time and pulse length to the timeline of the channel, asserting sswep_enable adds to the sweep timeline
         """
