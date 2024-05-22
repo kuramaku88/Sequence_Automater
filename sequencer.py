@@ -10,10 +10,11 @@ sheet_1 = "Pulse_Queue"
 sheet_2 = "Pulse_Definition"
 
 pulse_definition = pd.read_excel(file_name, sheet_name=sheet_2)
+pulse_queue = Pulse_Queue(pd.read_excel(file_name, sheet_name=sheet_1))
+
 pulse_names = pulse_definition.columns[1:]
 pulse_list = []
 pulse_dic = {}
-pulse_queue = Pulse_Queue(pd.read_excel(file_name, sheet_name=sheet_1))
 
 for name in pulse_names:
     pulse_list.append(Pulse(name, pulse_definition[name]))
@@ -33,13 +34,29 @@ delay = 0
 old = 0
 for command in combined:
     i = command[0]
-    if(i-delay==0):
+    if i - delay == 0:
         command_delay = 10
     else:
         command_delay = i - delay
     if command[1] == 1:
-        print(channel_on_off("Turn on channels", "DIO_1", str(on_time(channels)[str(i)]), "on", str(command_delay)))
+        print(
+            channel_on_off(
+                "Turn on channels",
+                "DIO_1",
+                str(on_time(channels)[str(i)]),
+                "on",
+                str(command_delay),
+            )
+        )
     else:
-        print(channel_on_off("Turn on channels", "DIO_1", str(off_time(channels)[str(i)]), "off", str(command_delay)))
-    delay = delay +command[0] - old
+        print(
+            channel_on_off(
+                "Turn on channels",
+                "DIO_1",
+                str(off_time(channels)[str(i)]),
+                "off",
+                str(command_delay),
+            )
+        )
+    delay = delay + command[0] - old
     old = command[0]
