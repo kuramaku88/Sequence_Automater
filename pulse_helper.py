@@ -55,12 +55,10 @@ def load_channels(
             pulse_length = pulse_queue.definition["Pulse Length"][ch]
             if mode == 1:
                 # print(j, "Channel", k, "On", start_time, pulse_length)
-                channels[k].append_timeline(
-                    np.array([start_time, pulse_length]), 0)
+                channels[k].append_timeline(np.array([start_time, pulse_length]), 0)
             elif mode == 2:
                 # print(j, "Channel", k, "Sweep", start_time, pulse_length)
-                channels[k].append_timeline(
-                    np.array([start_time, pulse_length]), 1)
+                channels[k].append_timeline(np.array([start_time, pulse_length]), 1)
         ch = ch + 1
     return channels
 
@@ -72,15 +70,18 @@ def df_load_channels(comb_df: DataFrame) -> list[Channel]:
     for i in range(num_channels):
         channel_col = f"Ch{i}"
         filtered_df = comb_df.query(f"{channel_col} != 'Off'")[
-            ["Pulse_Name", "Start Time", "Pulse Length", channel_col]]
+            ["Pulse_Name", "Start Time", "Pulse Length", channel_col]
+        ]
 
-        on_condition = filtered_df[channel_col] == 'On'
+        on_condition = filtered_df[channel_col] == "On"
         sweep_condition = ~on_condition
 
-        on_timeline = filtered_df.loc[on_condition, [
-            "Start Time", "Pulse Length"]].to_numpy()
-        sweep_timeline = filtered_df.loc[sweep_condition, [
-            "Start Time", "Pulse Length"]].to_numpy()
+        on_timeline = filtered_df.loc[
+            on_condition, ["Start Time", "Pulse Length"]
+        ].to_numpy()
+        sweep_timeline = filtered_df.loc[
+            sweep_condition, ["Start Time", "Pulse Length"]
+        ].to_numpy()
 
         for timeline in on_timeline:
             channels[i].append_timeline(timeline, 0)
@@ -123,7 +124,7 @@ def channel_plotter(channels: list[Channel], n=28):
 
 
 # TODO: rename this function and write documentation cuz gawddamn this name is confusing
-def on_time(channels: list[Channel]) -> dict[str: list[int]]:
+def on_time(channels: list[Channel]) -> dict[str : list[int]]:
     ontime = {}
     ch = 0
     for j in channels:
@@ -136,7 +137,7 @@ def on_time(channels: list[Channel]) -> dict[str: list[int]]:
     return ontime
 
 
-def off_time(channels: list[Channel]) -> dict[str: list[int]]:
+def off_time(channels: list[Channel]) -> dict[str : list[int]]:
     offtime = {}
     ch = 0
     for j in channels:
