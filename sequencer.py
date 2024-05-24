@@ -71,3 +71,6 @@ for command in combined:
     old = command[0]
 
 channel_plotter(channels, 5)
+
+def sequence():
+    print("HI")
