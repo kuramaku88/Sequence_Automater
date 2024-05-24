@@ -61,7 +61,8 @@ class Channel:
             if np.array_equal(self.sweep_timeline, np.empty_like(self.sweep_timeline)):
                 self.sweep_timeline = np.array([pulse_time])
             else:
-                self.sweep_timeline = np.vstack([self.sweep_timeline, pulse_time])
+                self.sweep_timeline = np.vstack(
+                    [self.sweep_timeline, pulse_time])
         else:
             if np.array_equal(self.timeline, np.empty_like(self.timeline)):
                 self.timeline = np.array([pulse_time])
