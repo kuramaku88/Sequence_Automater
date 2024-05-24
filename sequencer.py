@@ -1,28 +1,35 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 
-from py_pulse import *
-from pulse_helper import *
+from py_pulse import Pulse, Pulse_Queue, Channel
+from pulse_helper import (
+    load_channels,
+    on_time,
+    off_time,
+    channel_on_off,
+    channel_plotter,
+    df_load_channels,
+)
+
 
 file_name = "Pulse_Manager.xlsx"
 sheet_1 = "Pulse_Queue"
 sheet_2 = "Pulse_Definition"
+sheet_3 = "Test_Pulse_Definition"
 
-pulse_definition = pd.read_excel(file_name, sheet_name=sheet_2)
-pulse_queue = Pulse_Queue(pd.read_excel(file_name, sheet_name=sheet_1))
+df = pd.read_excel(file_name, sheet_name=[sheet_1, sheet_2, sheet_3])
+pulse_queue = Pulse_Queue(df[f"{sheet_1}"])
+pulse_definition = df[f"{sheet_2}"]
 
 pulse_names = pulse_definition.columns[1:]
-pulse_list = []
-pulse_dic = {}
+pulse_list = [Pulse(name, pulse_definition[name]) for name in pulse_names]
+pulse_dic = {name: Pulse(name, pulse_definition[name]) for name in pulse_names}
 
-for name in pulse_names:
-    pulse_list.append(Pulse(name, pulse_definition[name]))
-    pulse_dic.update({name: Pulse(name, pulse_definition[name])})
+test = pd.merge(df[f"{sheet_1}"], df[f"{sheet_3}"], how="left", on="Pulse_Name")
+bla = df_load_channels(test)
 
-# TODO: rewrite this function with pandas by querying through both of the sheets simultaneously
-#  (Istg even though you have to write borderline sql it's prolly way way easier than what we have rn)
-channels = load_channels(pulse_queue, pulse_dic, 28)
+# TODO: Look at the df_load_channels function
+channels = load_channels(pulse_queue, pulse_dic)
 
 on = np.sort(np.array(list(on_time(channels).keys()), dtype=int))
 off = np.sort(np.array(list(off_time(channels).keys()), dtype=int))
@@ -62,3 +69,5 @@ for command in combined:
         )
     delay = delay + command[0] - old
     old = command[0]
+
+channel_plotter(channels, 5)

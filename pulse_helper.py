@@ -1,6 +1,7 @@
 import numpy as np
-from py_pulse import *
+from py_pulse import Pulse_Queue, Pulse, Channel
 import matplotlib.pyplot as plt
+from pandas import DataFrame
 from typing import Optional
 
 
@@ -10,7 +11,6 @@ def timeline_merge(timeline: list[Optional[list[int]]]) -> list[Optional[list[in
         merged = np.array([])
         for i in range(1, len(timeline)):
             if np.array_equal(merged, np.empty_like(merged)):
-                j = 0
                 start_o = timeline[i - 1][0]
                 stop_o = timeline[i - 1][0] + timeline[i - 1][1]
                 start_n = timeline[i][0]
@@ -55,11 +55,39 @@ def load_channels(
             pulse_length = pulse_queue.definition["Pulse Length"][ch]
             if mode == 1:
                 # print(j, "Channel", k, "On", start_time, pulse_length)
-                channels[k].append_timeline(np.array([start_time, pulse_length]), 0)
+                channels[k].append_timeline(
+                    np.array([start_time, pulse_length]), 0)
             elif mode == 2:
                 # print(j, "Channel", k, "Sweep", start_time, pulse_length)
-                channels[k].append_timeline(np.array([start_time, pulse_length]), 1)
+                channels[k].append_timeline(
+                    np.array([start_time, pulse_length]), 1)
         ch = ch + 1
+    return channels
+
+
+def df_load_channels(comb_df: DataFrame) -> list[Channel]:
+    num_channels = 28
+    channels = [Channel() for _ in range(num_channels)]
+
+    for i in range(num_channels):
+        channel_col = f"Ch{i}"
+        filtered_df = comb_df.query(f"{channel_col} != 'Off'")[
+            ["Pulse_Name", "Start Time", "Pulse Length", channel_col]]
+
+        on_condition = filtered_df[channel_col] == 'On'
+        sweep_condition = ~on_condition
+
+        on_timeline = filtered_df.loc[on_condition, [
+            "Start Time", "Pulse Length"]].to_numpy()
+        sweep_timeline = filtered_df.loc[sweep_condition, [
+            "Start Time", "Pulse Length"]].to_numpy()
+
+        for timeline in on_timeline:
+            channels[i].append_timeline(timeline, 0)
+
+        for timeline in sweep_timeline:
+            channels[i].append_timeline(timeline, 1)
+
     return channels
 
 
@@ -78,7 +106,6 @@ def channel_plotter(channels: list[Channel], n=28):
     # Loops through each channel and plots the waveform for the channel
     # I have fixed it, but I think I can improve on how I have written it
     for ch in channels[:n]:
-
         # ax = plt.subplot(n, 1, ch_ct)
         c = next(color)
         for i in timeline_merge(ch.timeline):
@@ -96,13 +123,12 @@ def channel_plotter(channels: list[Channel], n=28):
 
 
 # TODO: rename this function and write documentation cuz gawddamn this name is confusing
-def on_time(channels: list[Channel]) -> dict[str : list[int]]:
+def on_time(channels: list[Channel]) -> dict[str: list[int]]:
     ontime = {}
     ch = 0
     for j in channels:
         for i in timeline_merge(j.timeline):
             try:
-                a = ontime[str(i[0])]
                 ontime[str(i[0])].append(ch)
             except:
                 ontime.update({str(i[0]): [ch]})
@@ -110,13 +136,12 @@ def on_time(channels: list[Channel]) -> dict[str : list[int]]:
     return ontime
 
 
-def off_time(channels: list[Channel]) -> dict[str : list[int]]:
+def off_time(channels: list[Channel]) -> dict[str: list[int]]:
     offtime = {}
     ch = 0
     for j in channels:
         for i in timeline_merge(j.timeline):
             try:
-                a = offtime[str(i[0] + i[1])]
                 offtime[str(i[0] + i[1])].append(ch)
             except:
                 offtime.update({str(i[0] + i[1]): [ch]})
