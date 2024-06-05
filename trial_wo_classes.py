@@ -2,6 +2,15 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 from colors import colors
+from pprint import pprint
+from colorama import Fore
+
+
+def calculate_difference(num1, num2):
+    if num1 - num2 < 1:
+        return round(num1 - num2, 2)
+    else:
+        return round(num1 - num2, 1)
 
 
 def flatten(arr):
@@ -15,6 +24,25 @@ def load_json(path):
     with open(path, "r") as f:
         data = json.load(f)
     return data
+
+
+def get_filtered_on_off_times(on_off_times):
+    filtered_on_off = {}
+    for time in on_off_times:
+        filtered_on_off[time] = {}
+        for k, v in on_off_times[time].items():
+            if len(v) != 0:
+                filtered_on_off[time][k] = v
+
+    filtered_items = {}
+
+    for times in filtered_on_off:
+        keys_for_time = list(filtered_on_off[times].keys())
+        if len(keys_for_time) > 1:
+            for i in list(filtered_on_off[times])[:-1]:
+                filtered_items[times + 0.010] = {i: filtered_on_off[times].pop(i)}
+    merged = filtered_on_off | filtered_items
+    return merged
 
 
 def get_on_off(pulses):
@@ -34,7 +62,8 @@ def get_on_off(pulses):
         for channel in pulse[1]["Channels"]:
             if channel not in on_off[end]["off"]:
                 on_off[end]["off"].append(channel)
-    return on_off
+
+    return get_filtered_on_off_times(on_off)
 
 
 def print_sequence(on_off_pulses):
@@ -42,6 +71,12 @@ def print_sequence(on_off_pulses):
 
     for i in range(len(keys)):
         if i == 0:
+            if keys[i] == 0.0:
+                print(
+                    Fore.YELLOW,
+                    "Adjusted Sequence to start at 0.01 us due to time constrains",
+                    Fore.RESET,
+                )
             for k, v in reversed(on_off_pulses[keys[i]].items()):
                 if len(v) != 0:
                     print(
@@ -51,16 +86,10 @@ def print_sequence(on_off_pulses):
         else:
             for k, v in reversed(on_off_pulses[keys[i]].items()):
                 if len(v) != 0:
-                    if k == "on" and len(on_off_pulses[keys[i]]["off"]) != 0:
-                        print(
-                            f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {
-                                v}, {k}, 0.010)"
-                        )
-                    else:
-                        print(
-                            f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {
-                                v}, {k}, {keys[i]-keys[i-1]})"
-                        )
+                    print(
+                        f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {
+                            v}, {k}, {calculate_difference(keys[i], keys[i-1])})"
+                    )
 
 
 def plot_pulses(pulses, group_name, duration, colors):
@@ -103,8 +132,8 @@ for group in data["groups"]:
         group["Pulses"].items(), key=lambda x: (x[1]["Start"], x[1]["Duration"])
     )
 
-    on_off = get_on_off(sorted_pulses_start)
-    sorted_on_off = dict(sorted(on_off.items(), key=lambda x: x))
+    on_off_times = get_on_off(sorted_pulses_start)
+    sorted_on_off = dict(sorted(on_off_times.items(), key=lambda x: x))
 
     print_sequence(sorted_on_off)
 
