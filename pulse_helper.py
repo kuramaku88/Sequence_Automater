@@ -39,7 +39,6 @@ def timeline_merge(timeline: list[Optional[list[int]]]) -> list[Optional[list[in
                     merged = np.vstack([merged, [start_n, stop_n - start_n]])
     else:
         merged = timeline
-
     return merged
 
 
@@ -73,6 +72,7 @@ def df_load_channels(comb_df: DataFrame) -> list[Channel]:
             ["Pulse_Name", "Start Time", "Pulse Length", channel_col]
         ]
 
+        # print(filtered_df.head())
         on_condition = filtered_df[channel_col] == "On"
         sweep_condition = ~on_condition
 
@@ -95,7 +95,7 @@ def df_load_channels(comb_df: DataFrame) -> list[Channel]:
 def channel_plotter(channels: list[Channel], n=28):
     ch_ct = 0
     # Creates a color map to ensure that each plot has a different color
-    col_lin = np.linspace(0, 1, n)
+    col_lin = np.linspace(0, 1, 50)
     np.random.seed(42)
     np.random.shuffle(col_lin)
     color = iter(plt.cm.rainbow(col_lin))
@@ -107,9 +107,10 @@ def channel_plotter(channels: list[Channel], n=28):
     # Loops through each channel and plots the waveform for the channel
     # I have fixed it, but I think I can improve on how I have written it
     for ch in channels[:n]:
-        # ax = plt.subplot(n, 1, ch_ct)
         c = next(color)
+        print(timeline_merge(ch.timeline))
         for i in timeline_merge(ch.timeline):
+            
             ax[ch_ct].plot([i[0], i[0] + i[1]], np.zeros_like(i) + 1, color=c)
             for ch_vert in (i[0], i[0] + i[1]):
                 ax[ch_ct].axvline(ch_vert, 0.0, 0.91, color=c)
@@ -117,10 +118,12 @@ def channel_plotter(channels: list[Channel], n=28):
             ax[ch_ct].set_yticks([])
             ax[ch_ct].set_ylim(0, 1.1)
             ax[ch_ct].set_xlim(0, 1000)
-            ax[ch_ct].set_ylabel("Ch_" + str(ch_ct))
+            ax[ch_ct].set_ylabel("Ch_" + str(ch_ct), rotation = 0)
             # ax.set_title("Channel"+str(ch_ct-1))
         ch_ct += 1  # Append the channel number
+    plt.savefig("Image.jpg")
     plt.show()
+    
 
 
 # TODO: rename this function and write documentation cuz gawddamn this name is confusing
@@ -149,8 +152,58 @@ def off_time(channels: list[Channel]) -> dict[str : list[int]]:
         ch += 1
     return offtime
 
-
+# Fix the command
 def channel_on_off(
     name: str, engine: str, channels: list[int], on_off: str, delay=10
 ) -> str:
-    return f'hvis.sync_while("{name}",{engine},{channels},"{on_off}", delay={delay}'
+    return f'hvis.dio_output("{name}",{engine},{channels},"{on_off}", delay={delay})'
+
+def code_gen(
+        channels: list[Channel], script_name: str
+) -> None:
+    
+    on = np.sort(np.array(list(on_time(channels).keys()), dtype=int))
+    off = np.sort(np.array(list(off_time(channels).keys()), dtype=int))
+
+    combined_on = np.array([[j, 1] for j in on])
+    combined_off = np.array([[j, 0] for j in off])
+    combined = np.vstack([combined_on, combined_off])
+    combined = combined[np.argsort(combined[:, 0])]
+
+    # Reading the beginning and the ending of the file, which will stay the same for now
+    with open("template_ini.txt", "r") as file:
+        temp_ini = file.read()
+
+    with open("template_end.txt", "r") as file:
+        temp_end = file.read()
+
+    # Write the initialisation section to the generated script
+    with open(script_name, "w") as file: 
+        file.write(temp_ini+'\n')
+
+    delay = 0
+    old = 0    
+
+    for command in combined:
+        i = command[0]
+        
+        if i - delay < 10:
+            raise TypeError(f"-------Clash in On-Off timings at {delay}ns -------- \n [Note: Minimum possible delay between on and off commands are is 10 ns]")
+        else:
+            command_delay = i - delay
+        
+        if command[1] == 1:
+            command_text = channel_on_off("Turn on channels", "DIO_1", str(on_time(channels)[str(i)]), "on", str(command_delay),)
+            with open(script_name, "a") as file: 
+                file.write('\t\t'+command_text+'\n') 
+
+        else:
+            command_text = channel_on_off("Turn off channels", "DIO_1", str(off_time(channels)[str(i)]), "off", str(command_delay))
+            with open(script_name, "a") as file: 
+                file.write('\t\t'+command_text+'\n') 
+
+        delay = delay + command[0] - old
+        old = command[0]
+
+    with open(script_name, "a") as file: 
+        file.write(temp_end)

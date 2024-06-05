@@ -48,7 +48,7 @@ class Pulse_Queue:
 
 class Channel:
     def __init__(
-        self, timeline: list() = np.array([]), sweep_timeline: list() = np.array([])
+        self, timeline: list = np.array([]), sweep_timeline: list = np.array([])
     ) -> None:
         self.timeline = timeline
         self.sweep_timeline = sweep_timeline
