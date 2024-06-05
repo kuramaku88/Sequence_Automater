@@ -2,7 +2,7 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 from colors import colors
-
+from pprint import pprint
 
 def flatten(arr):
     fin_arr = []
@@ -43,23 +43,22 @@ def print_sequence(on_off_pulses):
     for i in range(len(keys)):
         if i == 0:
             for k, v in reversed(on_off_pulses[keys[i]].items()):
+                if keys[i] == 0.0:
+                    print(f"Start of the sequence was automatically set to 0.010 us due to timing constains")
                 if len(v) != 0:
                     print(
-                        f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {
-                            v}, {k}, 0.010)"
+                        f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {v}, {k}, 0.010)"
                     )
         else:
             for k, v in reversed(on_off_pulses[keys[i]].items()):
                 if len(v) != 0:
                     if k == "on" and len(on_off_pulses[keys[i]]["off"]) != 0:
                         print(
-                            f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {
-                                v}, {k}, 0.010)"
+                            f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {v}, {k}, 0.010)"
                         )
                     else:
                         print(
-                            f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {
-                                v}, {k}, {keys[i]-keys[i-1]})"
+                            f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {v}, {k}, {keys[i]-keys[i-1]})"
                         )
 
 
