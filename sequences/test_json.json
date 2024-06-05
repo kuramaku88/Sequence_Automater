@@ -1,0 +1,52 @@
+{
+    "groups": [
+        {
+            "name": "default",
+            "Duration": 0.0,
+            "Pulses": {}
+        },
+        {
+            "name": "SDF1-test",
+            "Duration": 1000.0,
+            "Pulses": {
+                "FSTOT": {
+                    "Start": 0.0,
+                    "Duration": 1000.0,
+                    "Channels": [
+                        "B0",
+                        "B1"
+                    ]
+                },
+                "Cooling": {
+                    "Start": 0.0,
+                    "Duration": 921.5,
+                    "Channels": [
+                        "A6",
+                        "A8"
+                    ]
+                },
+                "OPF1": {
+                    "Start": 921.5,
+                    "Duration": 70.0,
+                    "Channels": [
+                        "A9"
+                    ]
+                },
+                "SD": {
+                    "Start": 992.0,
+                    "Duration": 7.5,
+                    "Channels": [
+                        "A7"
+                    ]
+                },
+                "Qutau Sync 1": {
+                    "Start": 0.0,
+                    "Duration": 10.0,
+                    "Channels": [
+                        "A0"
+                    ]
+                }
+            }
+        }
+    ]
+}

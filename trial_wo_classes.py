@@ -1,82 +1,111 @@
-from typing import OrderedDict
-import matplotlib.pyplot as plt
+import json
 import numpy as np
-import pandas as pd
-
-file_name = "Pulse_Manager.xlsx"
-sheet_1 = "Pulse_Queue"
+import matplotlib.pyplot as plt
+from colors import colors
 
 
-df = pd.read_excel(file_name, sheet_name=sheet_1)
-sorted_df = df.sort_values("Start Time")
+def flatten(arr):
+    fin_arr = []
+    for i in range(len(arr)):
+        fin_arr.extend(arr[i])
+    return fin_arr
 
 
-def read_pulses(df):
-    sorted_df = df.sort_values("Start Time")
-    pulses_in_queue = {}
-    for index, row in sorted_df.iterrows():
-        if row["Pulse_Name"] not in pulses_in_queue:
-            pulses_in_queue[row["Pulse_Name"]] = {
-                1: {"Start Time": row["Start Time"], "End Time": row["End Time"]}
-            }
+def load_json(path):
+    with open(path, "r") as f:
+        data = json.load(f)
+    return data
+
+
+def get_on_off(pulses):
+    on_off = {}
+    for pulse in pulses:
+        start = pulse[1]["Start"]
+        end = pulse[1]["Start"] + pulse[1]["Duration"]
+
+        # Handle the "on" event
+        if start not in on_off:
+            on_off[start] = {"on": [], "off": []}
+        on_off[start]["on"].extend(pulse[1]["Channels"])
+
+        # Handle the "off" event
+        if end not in on_off:
+            on_off[end] = {"on": [], "off": []}
+        for channel in pulse[1]["Channels"]:
+            if channel not in on_off[end]["off"]:
+                on_off[end]["off"].append(channel)
+    return on_off
+
+
+def print_sequence(on_off_pulses):
+    keys = list(on_off_pulses.keys())
+
+    for i in range(len(keys)):
+        if i == 0:
+            for k, v in reversed(on_off_pulses[keys[i]].items()):
+                if len(v) != 0:
+                    print(
+                        f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {
+                            v}, {k}, 0.010)"
+                    )
         else:
-            last_index = list(pulses_in_queue[row["Pulse_Name"]].keys())[-1]
-            pulses_in_queue[row["Pulse_Name"]][last_index + 1] = {
-                "Start Time": row["Start Time"],
-                "End Time": row["End Time"],
-            }
-    return pulses_in_queue
+            for k, v in reversed(on_off_pulses[keys[i]].items()):
+                if len(v) != 0:
+                    if k == "on" and len(on_off_pulses[keys[i]]["off"]) != 0:
+                        print(
+                            f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {
+                                v}, {k}, 0.010)"
+                        )
+                    else:
+                        print(
+                            f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {
+                                v}, {k}, {keys[i]-keys[i-1]})"
+                        )
 
-def plot_sequence(pulses_in_queue):
-    max_end_time = max(pulse[sub_pulse]["End Time"] for pulse in pulses_in_queue.values() for sub_pulse in pulse)
-    x_range = np.arange(0, max_end_time)
-    
+
+def plot_pulses(pulses, group_name, duration, colors):
+    if duration == 0.0:
+        return
+    c = 0
     offset = 1
-    colormap = plt.get_cmap("tab20", len(pulses_in_queue.keys()))
-    
-    for pulse_idx, pulse in enumerate(pulses_in_queue.keys()):
-        color = colormap(pulse_idx)
-        sub_pulses = pulses_in_queue[pulse]
-        sorted_sub_pulses = sorted(sub_pulses.values(), key=lambda sp: sp["Start Time"])
-
-        for sub_pulse in sorted_sub_pulses:
-            start_time = sub_pulse["Start Time"]
-            end_time = sub_pulse["End Time"]
-            
-            x = np.arange(start_time, end_time)
-            height = 1 + offset
-            y = np.full((len(x)), height)
-            
-            plt.plot(x, y, label=f"Pulse {pulse}" if sub_pulse == sorted_sub_pulses[0] else "", color=color)
-            plt.vlines(x=[x[0], x[-1]], ymin=height - 1, ymax=height, color=color)
-            
-            mid_x = (start_time + end_time) / 2
-            plt.text(mid_x, height - 0.5, '1', ha='center', va='center', color=color, fontsize=12)
-        
-        previous_end = 0
-        for sub_pulse in sorted_sub_pulses:
-            start_time = sub_pulse["Start Time"]
-            plt.hlines(y=height - 1, xmin=previous_end, xmax=start_time, color=color)
-            previous_end = sub_pulse["End Time"]
-        plt.hlines(y=height - 1, xmin=previous_end, xmax=max_end_time, color=color)
-
+    for pulse in pulses:
+        off_x_1 = np.arange(0, pulse[1]["Start"])
+        off_y_1 = np.zeros_like(off_x_1) + offset
+        plt.plot(off_x_1, off_y_1, color=colors[c])
+        plt.vlines(x=pulse[1]["Start"], ymin=offset, ymax=offset + 1, color=colors[c])
+        on_x = np.arange(pulse[1]["Start"], pulse[1]["Start"] + pulse[1]["Duration"])
+        on_y = np.zeros_like(on_x) + offset + 1
+        plt.plot(on_x, on_y, color=colors[c])
+        off_x_2 = np.arange(pulse[1]["Start"] + pulse[1]["Duration"], duration)
+        off_y_2 = np.zeros_like(off_x_2) + offset
+        plt.plot(off_x_2, off_y_2, color=colors[c])
+        plt.vlines(
+            x=pulse[1]["Start"] + pulse[1]["Duration"],
+            ymin=offset,
+            ymax=offset + 1,
+            color=colors[c],
+        )
         offset += 2
-    
-    plt.plot(x_range, np.zeros(len(x_range)), color='black')
-
-    x_ticks = np.linspace(start=min(x_range), stop=max(x_range), num=10)
-    plt.xticks(x_ticks,['%d' % np.ceil(val) for val in x_ticks])
-    plt.yticks([],[])
-
-    handles, labels = plt.gca().get_legend_handles_labels()
-    by_label = OrderedDict(zip(labels, handles))
-    plt.legend(by_label.values(), by_label.keys(), loc="lower right")
-    
-    plt.xlabel("Time")
-    plt.ylabel("Channels")
-    plt.title("Pulse Sequence Plot")
-    
+        c += 1
+    plt.plot(
+        np.arange(0, duration), np.zeros_like(np.arange(0, duration)), color="black"
+    )
+    plt.title(f"Pulse Sequence for {group_name}")
+    plt.grid(True)
     plt.show()
 
-pulses_in_queue = read_pulses(df)
-plot_sequence(pulses_in_queue)
+
+data = load_json("./sequences/test_json.json")
+
+for group in data["groups"]:
+    # Sorts all Pulses by the start time
+    sorted_pulses_start = sorted(
+        group["Pulses"].items(), key=lambda x: (x[1]["Start"], x[1]["Duration"])
+    )
+
+    on_off = get_on_off(sorted_pulses_start)
+    sorted_on_off = dict(sorted(on_off.items(), key=lambda x: x))
+
+    print_sequence(sorted_on_off)
+
+    plot_pulses(group["Pulses"].items(), group["name"], group["Duration"], colors)
