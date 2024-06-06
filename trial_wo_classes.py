@@ -3,9 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from colors import colors
 from pprint import pprint
-from pprint import pprint
 from colorama import Fore
 
+from pulse_helper import timeline_merge
 
 def calculate_difference(num1, num2):
     if num1 - num2 < 1:
@@ -13,6 +13,16 @@ def calculate_difference(num1, num2):
     else:
         return round(num1 - num2, 1)
 
+def get_all_channels(pulses):
+    channel_list = []
+    for time , _ in pulses.items():
+        for _ , channels in pulses[time].items():
+            if len(channels) == 0:
+                continue
+            for channel in channels:
+                if channel not in channel_list:
+                    channel_list.append(channel)
+    return channel_list
 
 def flatten(arr):
     fin_arr = []
@@ -41,7 +51,7 @@ def get_filtered_on_off_times(on_off_times):
         keys_for_time = list(filtered_on_off[times].keys())
         if len(keys_for_time) > 1:
             for i in list(filtered_on_off[times])[:-1]:
-                filtered_items[times + 0.010] = {i: filtered_on_off[times].pop(i)}
+                filtered_items[times + 0.010] = {i: filtered_on_off[times].pop(i)} # actually throw error here instead of appending another element (only throw error if the channels differ)
     merged = filtered_on_off | filtered_items
     return merged
 
@@ -69,7 +79,7 @@ def get_on_off(pulses):
 
 def print_sequence(on_off_pulses):
     keys = list(on_off_pulses.keys())
-    print(on_off_pulses)
+    # print(on_off_pulses)
     for i in range(len(keys)):
         if i == 0:
             if keys[i] == 0.0:
@@ -88,17 +98,8 @@ def print_sequence(on_off_pulses):
         else:
             for k, v in reversed(on_off_pulses[keys[i]].items()):
                 if len(v) != 0:
-                    if k == "on" and len(on_off_pulses[keys[i]]["off"]) != 0:
-                        print(
-                            f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {v}, {k}, 0.010)"
-                        )
-                    else:
-                        print(
-                            f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {v}, {k}, {keys[i]-keys[i-1]})"
-                        )
                     print(
-                        f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {
-                            v}, {k}, {calculate_difference(keys[i], keys[i-1])})"
+                        f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {v}, {k}, {calculate_difference(keys[i], keys[i-1])})"
                     )
 
 
@@ -141,10 +142,38 @@ for group in data["groups"]:
     sorted_pulses_start = sorted(
         group["Pulses"].items(), key=lambda x: (x[1]["Start"], x[1]["Duration"])
     )
-
     on_off_times = get_on_off(sorted_pulses_start)
-    sorted_on_off = dict(sorted(on_off_times.items(), key=lambda x: x))
+    channel_list = get_all_channels(on_off_times)
+    channel_dic = {}
 
-    print_sequence(sorted_on_off)
+    # pprint(sorted_pulses_start)
+    for pulse in sorted_pulses_start:
+        start, duration, channels = pulse[1].keys()
+        for channel in pulse[1][channels]:
+            if channel in channel_list:
+                try:
+                    channel_dic[channel].append([pulse[1][start], pulse[1][duration]])
+                except:
+                    channel_dic.update({str(channel): [[pulse[1][start], pulse[1][duration]]]})
+    
+    for channel in channel_list:
+        print(channel)
+        print(timeline_merge(np.array(channel_dic[channel])))
+    
+    # pprint(on_off_times)
+    # pprint(channel_list)
+    # bla = {}
+    # for channel in channel_list:
+    #     bla[channel] = {"on": [], "off": []}
+    #     for time, subsequence in on_off_times.items():
+    #         for command, channels in on_off_times[time].items():
+    #             if channel in channels:
+    #                 bla[channel][command].append(time)
+    
+    
+    # pprint(bla)
 
-    plot_pulses(group["Pulses"].items(), group["name"], group["Duration"], colors)
+    # sorted_on_off = dict(sorted(on_off_times.items(), key=lambda x: x))
+
+    # # print_sequence(sorted_on_off)
+    # plot_pulses(group["Pulses"].items(), group["name"], group["Duration"], colors)
