@@ -19,7 +19,7 @@
                 },
                 "Cooling": {
                     "Start": 0.0,
-                    "Duration": 921.5,
+                    "Duration": 920.5,
                     "Channels": [
                         "A6",
                         "A8"
@@ -29,7 +29,8 @@
                     "Start": 921.5,
                     "Duration": 70.0,
                     "Channels": [
-                        "A9"
+                        "A9", 
+                        "A0"
                     ]
                 },
                 "SD": {
@@ -41,6 +42,13 @@
                 },
                 "Qutau Sync 1": {
                     "Start": 0.0,
+                    "Duration": 10.0,
+                    "Channels": [
+                        "A0"
+                    ]
+                },
+                "Qutau Sync 2": {
+                    "Start": 5.0,
                     "Duration": 10.0,
                     "Channels": [
                         "A0"

@@ -51,7 +51,8 @@ def get_filtered_on_off_times(on_off_times):
         keys_for_time = list(filtered_on_off[times].keys())
         if len(keys_for_time) > 1:
             for i in list(filtered_on_off[times])[:-1]:
-                filtered_items[times + 0.010] = {i: filtered_on_off[times].pop(i)} # actually throw error here instead of appending another element (only throw error if the channels differ)
+                raise TypeError(f"-------Clash in On-Off timings at {times}ns -------- \n [Note: Minimum possible delay between on and off commands are is 10 ns]")
+                # filtered_items[times + 0.010] = {i: filtered_on_off[times].pop(i)} # actually throw error here instead of appending another element (only throw error if the channels differ)
     merged = filtered_on_off | filtered_items
     return merged
 
@@ -76,6 +77,41 @@ def get_on_off(pulses):
 
     return get_filtered_on_off_times(on_off)
 
+def merge_channels(on_off_times, channel_list, sorted_pulses):
+    channel_dic = {}
+
+    for pulse in sorted_pulses_start:
+        start, duration, channels = pulse[1].keys()
+        for channel in pulse[1][channels]:
+            if channel in channel_list:
+                try:
+                    channel_dic[channel].append([pulse[1][start], pulse[1][duration]])
+                except:
+                    channel_dic.update({str(channel): [[pulse[1][start], pulse[1][duration]]]})
+    
+    try_sorted_on_off = {}
+    for channel in channel_list:
+        merged = timeline_merge(np.array(channel_dic[channel]))
+        for current in merged:
+            t_start = current[0]
+            t_stop = current[1] + current[0]
+            for start, seq in on_off_times.items():
+                for command, channels in on_off_times[start].items():
+                    if channel in channels:
+                        if start!=t_start and command=="on":
+                            channels.remove(channel)
+            try:
+                try_sorted_on_off[t_start]['on'].append(channel)
+            except:
+                try_sorted_on_off.update({t_start: {'on': []}})
+                try_sorted_on_off[t_start]['on'].append(str(channel))
+
+            try:
+                try_sorted_on_off[t_stop]['off'].append(channel)
+            except:
+                try_sorted_on_off.update({t_stop: {'off': []}})
+                try_sorted_on_off[t_stop]['off'].append(str(channel))
+    return try_sorted_on_off
 
 def print_sequence(on_off_pulses):
     keys = list(on_off_pulses.keys())
@@ -89,8 +125,6 @@ def print_sequence(on_off_pulses):
                     Fore.RESET,
                 )
             for k, v in reversed(on_off_pulses[keys[i]].items()):
-                if keys[i] == 0.0:
-                    print(f"Start of the sequence was automatically set to 0.010 us due to timing constains")
                 if len(v) != 0:
                     print(
                         f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {v}, {k}, 0.010)"
@@ -144,36 +178,10 @@ for group in data["groups"]:
     )
     on_off_times = get_on_off(sorted_pulses_start)
     channel_list = get_all_channels(on_off_times)
-    channel_dic = {}
 
-    # pprint(sorted_pulses_start)
-    for pulse in sorted_pulses_start:
-        start, duration, channels = pulse[1].keys()
-        for channel in pulse[1][channels]:
-            if channel in channel_list:
-                try:
-                    channel_dic[channel].append([pulse[1][start], pulse[1][duration]])
-                except:
-                    channel_dic.update({str(channel): [[pulse[1][start], pulse[1][duration]]]})
+    merged_on_off = merge_channels(on_off_times, channel_list, sorted_pulses_start)
     
-    for channel in channel_list:
-        print(channel)
-        print(timeline_merge(np.array(channel_dic[channel])))
+    sorted_on_off = dict(sorted(merged_on_off.items(), key=lambda x: x))
     
-    # pprint(on_off_times)
-    # pprint(channel_list)
-    # bla = {}
-    # for channel in channel_list:
-    #     bla[channel] = {"on": [], "off": []}
-    #     for time, subsequence in on_off_times.items():
-    #         for command, channels in on_off_times[time].items():
-    #             if channel in channels:
-    #                 bla[channel][command].append(time)
-    
-    
-    # pprint(bla)
-
-    # sorted_on_off = dict(sorted(on_off_times.items(), key=lambda x: x))
-
-    # # print_sequence(sorted_on_off)
-    # plot_pulses(group["Pulses"].items(), group["name"], group["Duration"], colors)
+    print_sequence(sorted_on_off)
+    plot_pulses(group["Pulses"].items(), group["name"], group["Duration"], colors)
