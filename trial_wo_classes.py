@@ -1,11 +1,27 @@
 import json
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+
 from colors import colors
 from pprint import pprint
 from colorama import Fore
-
 from pulse_helper import timeline_merge
+
+modules_path = "D:\MPQ\scripts\modules\\"
+templates_path = "D:\MPQ\scripts\\templates\\"
+script_path = "D:\MPQ\scripts\\"
+
+def delete_files_in_directory(directory_path):
+   try:
+     files = os.listdir(directory_path)
+     for file in files:
+       file_path = os.path.join(directory_path, file)
+       if os.path.isfile(file_path):
+         os.remove(file_path)
+     print("Directory cleared \n")
+   except OSError:
+     print("Error occurred while deleting files.")
 
 def calculate_difference(num1, num2):
     if num1 - num2 < 1:
@@ -113,12 +129,16 @@ def merge_channels(on_off_times, channel_list, sorted_pulses):
                 try_sorted_on_off[t_stop]['off'].append(str(channel))
     return try_sorted_on_off
 
-def print_sequence(on_off_pulses):
+def print_sequence(on_off_pulses, module_name):
     keys = list(on_off_pulses.keys())
-    # print(on_off_pulses)
+    
+    with open(modules_path+module_name+'.txt','w') as file:
+        file.write("### Commands for " + module_name+'\n')
+
     for i in range(len(keys)):
         if i == 0:
             if keys[i] == 0.0:
+                print(module_name)
                 print(
                     Fore.YELLOW,
                     "Adjusted Sequence to start at 0.01 us due to time constrains",
@@ -126,15 +146,17 @@ def print_sequence(on_off_pulses):
                 )
             for k, v in reversed(on_off_pulses[keys[i]].items()):
                 if len(v) != 0:
-                    print(
-                        f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {v}, {k}, 0.010)"
-                    )
+                    command_text = f"\t\thvis.dio_send_trigger('Turn {k} triggers', {module_name}, {v}, {k}, 0.010)"
+
+                    with open(modules_path+module_name+'.txt', 'a') as file:
+                        file.write(command_text+'\n')
         else:
             for k, v in reversed(on_off_pulses[keys[i]].items()):
                 if len(v) != 0:
-                    print(
-                        f"hvis.dio_send_trigger('Turn {k} triggers', dio_module, {v}, {k}, {calculate_difference(keys[i], keys[i-1])})"
-                    )
+                    command_text = f"\t\thvis.dio_send_trigger('Turn {k} triggers', {module_name}, {v}, {k}, {calculate_difference(keys[i], keys[i-1])})"
+
+                    with open(modules_path+module_name+'.txt', 'a') as file:
+                        file.write(command_text+'\n')
 
 
 def plot_pulses(pulses, group_name, duration, colors):
@@ -168,8 +190,34 @@ def plot_pulses(pulses, group_name, duration, colors):
     plt.grid(True)
     plt.show()
 
+def script_gen(modules_path, templates_path, script_path, script_name):
+    template_end_path, template_ini_path = os.listdir(templates_path)
+    modules = os.listdir(modules_path)
+
+    with open(templates_path + template_ini_path, 'r') as file:
+        template_ini = file.read()
+    
+    with open(templates_path + template_end_path, 'r') as file:
+        template_end = file.read()
+
+    with open(script_path+script_name, 'w') as file:
+        file.write(template_ini+'\n')
+    
+    for module_sequence_path in modules:
+        with open(modules_path + module_sequence_path, 'r') as file:
+            module_sequence = file.read()
+
+        with open(script_path+script_name, 'a') as file:
+            file.write(module_sequence)
+    
+    with open(script_path+script_name, 'a') as file:
+        file.write(template_end)
+    
+    print("python script generated \n")
 
 data = load_json("./sequences/test_json.json")
+
+delete_files_in_directory(modules_path)
 
 for group in data["groups"]:
     # Sorts all Pulses by the start time
@@ -180,8 +228,12 @@ for group in data["groups"]:
     channel_list = get_all_channels(on_off_times)
 
     merged_on_off = merge_channels(on_off_times, channel_list, sorted_pulses_start)
-    
     sorted_on_off = dict(sorted(merged_on_off.items(), key=lambda x: x))
-    
-    print_sequence(sorted_on_off)
-    plot_pulses(group["Pulses"].items(), group["name"], group["Duration"], colors)
+    pprint(sorted_on_off)
+    # NOTE The function has been rewritten such that each group is considered as a module and the commands for each are generated in a file separately
+    print_sequence(sorted_on_off, group["name"])
+
+    # plot_pulses(group["Pulses"].items(), group["name"], group["Duration"], colors)
+
+script_gen(modules_path,templates_path, script_path, "test_script.py")
+

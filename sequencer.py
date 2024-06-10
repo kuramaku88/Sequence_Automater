@@ -22,5 +22,5 @@ merged_sheet = pd.merge(df[f"{sheet_1}"], df[f"{sheet_3}"], how="left", on="Puls
 
 # TODO: Look at the df_load_channels function
 channels = df_load_channels(merged_sheet)
-code_gen(channels, "lvds_test.py")
+code_gen(channels, "try1.py")
 channel_plotter(channels, 28)

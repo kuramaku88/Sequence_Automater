@@ -131,6 +131,7 @@ def on_time(channels: list[Channel]) -> dict[str : list[int]]:
     ontime = {}
     ch = 0
     for j in channels:
+        print(j.timeline)
         for i in timeline_merge(j.timeline):
             try:
                 ontime[str(i[0])].append(ch)
