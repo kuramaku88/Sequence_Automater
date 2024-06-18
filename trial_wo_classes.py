@@ -2,6 +2,7 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import copy
 
 from colors import colors
 from pprint import pprint
@@ -46,13 +47,28 @@ def flatten(arr):
         fin_arr.extend(arr[i])
     return fin_arr
 
+def Merge(dict1, dict2):
+    # Check conflict before merging commands
+    key_delay_pairs_1 = [(key, value['delay']) for key, value in dict1.items()]
+    key_delay_pairs_2 = [(key, value['delay']) for key, value in dict2.items()]
+    # retrive 
 
+    for pair1 in key_delay_pairs_1:
+        for pair2 in key_delay_pairs_2:
+            if abs(pair1[0]-pair2[0]) <  0.01:
+                time = pair1[0]
+                raise TypeError(f"-------Clash in command timings at {time}us -------- \n ")
+    
+    
+    return None
+
+# Method to load json file into a python variable
 def load_json(path):
     with open(path, "r") as f:
         data = json.load(f)
     return data
 
-
+# Method that returns a list of on_off_times
 def get_filtered_on_off_times(on_off_times):
     filtered_on_off = {}
     for time in on_off_times:
@@ -72,7 +88,7 @@ def get_filtered_on_off_times(on_off_times):
     merged = filtered_on_off | filtered_items
     return merged
 
-
+# Get a list of on_off times from pulses
 def get_on_off(pulses):
     on_off = {}
     for pulse in pulses:
@@ -93,6 +109,23 @@ def get_on_off(pulses):
 
     return get_filtered_on_off_times(on_off)
 
+def get_on_times(commands):
+    on = {}
+
+    for command in commands:
+        start = command[1]["Start"]
+        Initial_Width = command[1]["Initial_Width"]
+        Rising_Edge_Increment = command[1]["Rising_Edge_Increment"]
+        Falling_Edge_Increment = command[1]["Falling_Edge_Increment"]
+        Channels = command[1]["Channels"]
+
+        if start in on:
+            raise TypeError(f"-------Sweeps of different configurations starting at the same time -------- \n [Note: There is a delay between initialising different sweeps]")
+        else: 
+            on[start] = {"Sweep": [Initial_Width, Rising_Edge_Increment, Falling_Edge_Increment, Channels]}
+    return on
+
+# Method that merges the timeslines for each channel from different pulses in the same module
 def merge_channels(on_off_times, channel_list, sorted_pulses):
     channel_dic = {}
 
@@ -129,6 +162,25 @@ def merge_channels(on_off_times, channel_list, sorted_pulses):
                 try_sorted_on_off[t_stop]['off'].append(str(channel))
     return try_sorted_on_off
 
+def add_delay(command_dic, command_type):
+    command_dic = copy.deepcopy(command_dic)
+
+    if command_type == "Pulses":
+        for key in command_dic:
+            command_dic[key]["delay"] = 10
+
+    if command_type == "Sweeps":
+        for key in command_dic:
+            sweep_ch_no = len(command_dic[key]['Sweep'][-1])
+            delay = 45+sweep_ch_no*30
+            if key<delay/1000:
+                raise TypeError(f"-------Clash in Sweep delay and Sweep Start timings at {key}us -------- \n ", key)
+            command_dic[key]["delay"] = delay
+            
+    return command_dic
+    
+
+# Method that saves the sequence for each module in a separate file in the modules folder
 def print_sequence(on_off_pulses, module_name):
     keys = list(on_off_pulses.keys())
     
@@ -158,7 +210,7 @@ def print_sequence(on_off_pulses, module_name):
                     with open(modules_path+module_name+'.txt', 'a') as file:
                         file.write(command_text+'\n')
 
-
+# Method to generate timing plots for pulses 
 def plot_pulses(pulses, group_name, duration, colors):
     if duration == 0.0:
         return
@@ -190,6 +242,7 @@ def plot_pulses(pulses, group_name, duration, colors):
     plt.grid(True)
     plt.show()
 
+# Method that generates the script
 def script_gen(modules_path, templates_path, script_path, script_name):
     template_end_path, template_ini_path = os.listdir(templates_path)
     modules = os.listdir(modules_path)
@@ -215,25 +268,37 @@ def script_gen(modules_path, templates_path, script_path, script_name):
     
     print("python script generated \n")
 
-data = load_json("./sequences/test_json.json")
+# Main body
+data = load_json("./sequences/test_json_arb.json")
 
 delete_files_in_directory(modules_path)
 
 for group in data["groups"]:
+
+###########----------------For_Pulses----------------###########
     # Sorts all Pulses by the start time
     sorted_pulses_start = sorted(
         group["Pulses"].items(), key=lambda x: (x[1]["Start"], x[1]["Duration"])
     )
+    print(group["name"])
     on_off_times = get_on_off(sorted_pulses_start)
     channel_list = get_all_channels(on_off_times)
-
     merged_on_off = merge_channels(on_off_times, channel_list, sorted_pulses_start)
-    sorted_on_off = dict(sorted(merged_on_off.items(), key=lambda x: x))
-    pprint(sorted_on_off)
-    # NOTE The function has been rewritten such that each group is considered as a module and the commands for each are generated in a file separately
-    print_sequence(sorted_on_off, group["name"])
+    pulses_on_off = dict(sorted(merged_on_off.items(), key=lambda x: x))
 
+###########----------------For_Sweeps----------------###########
+    # Sorts sweeps by start time
+    sorted_sweeps_start = sorted(
+        group["Sweeps"].items(), key=lambda x: (x[1]["Start"], x[1]["Initial_Width"], x[1]["Rising_Edge_Increment"], x[1]["Falling_Edge_Increment"])
+    )
+    sweeps_on = get_on_times(sorted_sweeps_start)
+
+###########----------------Combine_Commands----------------###########
+    final_command_dic = Merge(add_delay(pulses_on_off, "Pulses"), add_delay(sweeps_on, "Sweeps"))
+
+# NOTE The function has been rewritten such that each group is considered as a module and the commands for each are generated in a file separately
+    print_sequence(pulses_on_off, group["name"])
     # plot_pulses(group["Pulses"].items(), group["name"], group["Duration"], colors)
 
-script_gen(modules_path,templates_path, script_path, "test_script.py")
+script_gen(modules_path,templates_path, script_path, "test_script_4.py")
 

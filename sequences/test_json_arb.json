@@ -1,0 +1,93 @@
+{
+    "groups": [
+        {
+            "name": "Module_DIO_2",
+            "Duration": 1000.0,
+            "Pulses": {
+                "FSTOT": {
+                "Start": 10.0,
+                "Duration": 1000.0,
+                "Channels": [
+                    "B0",
+                    "B1"
+                ]
+            }
+        }, 
+            "Sweeps": {
+                "Rabi_Sweep_1": {
+                    "Start": 1.0,
+                    "Initial_Width": 10,
+                    "Rising_Edge_Increment": 0.0,
+                    "Falling_Edge_Increment": 10,
+                    "Channels": [
+                        "B2",
+                        "B3"
+                    ] 
+                },
+                "Rabi_Sweep_2": {
+                    "Start": 100.0,
+                    "Initial_Width": 10,
+                    "Rising_Edge_Increment": 0.0,
+                    "Falling_Edge_Increment": 10,
+                    "Channels": [
+                        "B4"
+                    ] 
+                }
+            }
+        },
+        {
+            "name": "Module_DIO_1",
+            "Duration": 1000.0,
+            "Pulses": {
+                "Cooling": {
+                    "Start": 0.0,
+                    "Duration": 920.5,
+                    "Channels": [
+                        "A6",
+                        "A8"
+                    ]
+                },
+                "OPF1": {
+                    "Start": 921.5,
+                    "Duration": 70.0,
+                    "Channels": [
+                        "A9", 
+                        "A0"
+                    ]
+                },
+                "SD": {
+                    "Start": 992.0,
+                    "Duration": 7.5,
+                    "Channels": [
+                        "A7"
+                    ]
+                },
+                "Qutau Sync 1": {
+                    "Start": 0.0,
+                    "Duration": 10.0,
+                    "Channels": [
+                        "A0"
+                    ]
+                },
+                "Qutau Sync 2": {
+                    "Start": 5.0,
+                    "Duration": 10.0,
+                    "Channels": [
+                        "A0"
+                    ]
+                },
+                "Qutau Sync 4": {
+                    "Start": 20.0,
+                    "Duration": 110.0,
+                    "Channels": [
+                        "A11"
+                    ]
+                }
+
+            },
+            "Sweeps": {
+            }
+
+        }
+    ]
+}
