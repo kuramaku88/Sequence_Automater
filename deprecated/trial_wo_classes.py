@@ -12,6 +12,7 @@ from pulse_helper import timeline_merge
 modules_path = "D:\MPQ\scripts\modules\\"
 templates_path = "D:\MPQ\scripts\\templates\\"
 script_path = "D:\MPQ\scripts\\"
+reset_path = "D:\MPQ\scripts\\reset\\"
 
 def delete_files_in_directory(directory_path):
    try:
@@ -46,21 +47,6 @@ def flatten(arr):
     for i in range(len(arr)):
         fin_arr.extend(arr[i])
     return fin_arr
-
-def Merge(dict1, dict2):
-    # Check conflict before merging commands
-    key_delay_pairs_1 = [(key, value['delay']) for key, value in dict1.items()]
-    key_delay_pairs_2 = [(key, value['delay']) for key, value in dict2.items()]
-    # retrive 
-
-    for pair1 in key_delay_pairs_1:
-        for pair2 in key_delay_pairs_2:
-            if abs(pair1[0]-pair2[0]) <  0.01:
-                time = pair1[0]
-                raise TypeError(f"-------Clash in command timings at {time}us -------- \n ")
-    
-    
-    return None
 
 # Method to load json file into a python variable
 def load_json(path):
@@ -114,7 +100,9 @@ def get_on_times(commands):
 
     for command in commands:
         start = command[1]["Start"]
-        Initial_Width = command[1]["Initial_Width"]
+        Sweep_Reg_Number = command[1]["Sweep_Reg_Number"]
+        Rising_Edge_Delay = command[1]["Rising_Edge_Delay"]
+        Falling_Edge_Delay = command[1]["Falling_Edge_Delay"]
         Rising_Edge_Increment = command[1]["Rising_Edge_Increment"]
         Falling_Edge_Increment = command[1]["Falling_Edge_Increment"]
         Channels = command[1]["Channels"]
@@ -122,15 +110,15 @@ def get_on_times(commands):
         if start in on:
             raise TypeError(f"-------Sweeps of different configurations starting at the same time -------- \n [Note: There is a delay between initialising different sweeps]")
         else: 
-            on[start] = {"Sweep": [Initial_Width, Rising_Edge_Increment, Falling_Edge_Increment, Channels]}
+            on[start] = {"Sweep": [Sweep_Reg_Number, Rising_Edge_Delay, Falling_Edge_Delay, Rising_Edge_Increment, Falling_Edge_Increment, Channels]}
     return on
 
 # Method that merges the timeslines for each channel from different pulses in the same module
 def merge_channels(on_off_times, channel_list, sorted_pulses):
     channel_dic = {}
 
-    for pulse in sorted_pulses_start:
-        start, duration, channels = pulse[1].keys()
+    for pulse in sorted_pulses:
+        start, duration, channels, tags = pulse[1].keys()
         for channel in pulse[1][channels]:
             if channel in channel_list:
                 try:
@@ -167,18 +155,37 @@ def add_delay(command_dic, command_type):
 
     if command_type == "Pulses":
         for key in command_dic:
-            command_dic[key]["delay"] = 10
+            command_dic[key]["delay"] = 10/1000
 
     if command_type == "Sweeps":
         for key in command_dic:
             sweep_ch_no = len(command_dic[key]['Sweep'][-1])
-            delay = 45+sweep_ch_no*30
-            if key<delay/1000:
+            delay = (50+sweep_ch_no*30)/1000
+            if key<delay:
                 raise TypeError(f"-------Clash in Sweep delay and Sweep Start timings at {key}us -------- \n ", key)
             command_dic[key]["delay"] = delay
             
     return command_dic
+
+
+def Merge(dict1, dict2):
+    # Check conflict before merging commands
+    key_delay_pairs_1 = [(key, value['delay']) for key, value in dict1.items()]
+    key_delay_pairs_2 = [(key, value['delay']) for key, value in dict2.items()]
     
+    # retrive 
+
+    for pair1 in key_delay_pairs_1:
+        for pair2 in key_delay_pairs_2:
+            if abs(pair1[0]-pair2[0]) <  0.01:
+                time = pair1[0]
+                raise TypeError(f"-------Clash in command timings at {time}us -------- \n ")
+            
+    print(key_delay_pairs_1)
+    print(key_delay_pairs_2)
+    print("Hello")
+    dict1.update(dict2)
+    return dict1
 
 # Method that saves the sequence for each module in a separate file in the modules folder
 def print_sequence(on_off_pulses, module_name):
@@ -198,14 +205,16 @@ def print_sequence(on_off_pulses, module_name):
                 )
             for k, v in reversed(on_off_pulses[keys[i]].items()):
                 if len(v) != 0:
-                    command_text = f"\t\thvis.dio_send_trigger('Turn {k} triggers', {module_name}, {v}, {k}, 0.010)"
+                    tag = str(v).replace('\'', '')
+                    command_text = f"\t\thvis.dio_send_trigger('Turn {k} triggers: {tag}', {module_name}, {v}, {k}, 10)"
 
                     with open(modules_path+module_name+'.txt', 'a') as file:
                         file.write(command_text+'\n')
         else:
             for k, v in reversed(on_off_pulses[keys[i]].items()):
                 if len(v) != 0:
-                    command_text = f"\t\thvis.dio_send_trigger('Turn {k} triggers', {module_name}, {v}, {k}, {calculate_difference(keys[i], keys[i-1])})"
+                    tag = str(v).replace('\'', '')
+                    command_text = f"\t\thvis.dio_send_trigger('Turn {k} triggers {tag}', {module_name}, {v}, {k}, {calculate_difference(keys[i], keys[i-1])*1000})"
 
                     with open(modules_path+module_name+'.txt', 'a') as file:
                         file.write(command_text+'\n')
@@ -244,18 +253,30 @@ def plot_pulses(pulses, group_name, duration, colors):
 
 # Method that generates the script
 def script_gen(modules_path, templates_path, script_path, script_name):
-    template_end_path, template_ini_path = os.listdir(templates_path)
+    
     modules = os.listdir(modules_path)
 
-    with open(templates_path + template_ini_path, 'r') as file:
+    template_end_path = 'D:\MPQ\scripts\\templates\\template_end.txt'
+    template_ini_path = 'D:\MPQ\scripts\\templates\\template_ini_new.txt'
+    # template_ini_path ='scripts\templates\template_ini_new.txt'
+
+    sweep_reset_path = 'D:\MPQ\scripts\\reset\sweep_reset.txt'
+    
+    with open(template_ini_path, 'r') as file:
         template_ini = file.read()
     
-    with open(templates_path + template_end_path, 'r') as file:
+    with open(template_end_path, 'r') as file:
         template_end = file.read()
+
+    with open(sweep_reset_path, 'r') as file:
+        sweep_reset = file.read()
 
     with open(script_path+script_name, 'w') as file:
         file.write(template_ini+'\n')
     
+    with open(script_path+script_name, 'a') as file:
+        file.write(sweep_reset+'\n')
+
     for module_sequence_path in modules:
         with open(modules_path + module_sequence_path, 'r') as file:
             module_sequence = file.read()
@@ -268,37 +289,51 @@ def script_gen(modules_path, templates_path, script_path, script_name):
     
     print("python script generated \n")
 
-# Main body
-data = load_json("./sequences/test_json_arb.json")
+######################################################################################
+###############################---MAIN BODY---########################################
+######################################################################################
 
-delete_files_in_directory(modules_path)
+# data = load_json("./sequences/test_json_arb.json")
 
-for group in data["groups"]:
+# delete_files_in_directory(modules_path)
 
-###########----------------For_Pulses----------------###########
-    # Sorts all Pulses by the start time
-    sorted_pulses_start = sorted(
-        group["Pulses"].items(), key=lambda x: (x[1]["Start"], x[1]["Duration"])
-    )
-    print(group["name"])
-    on_off_times = get_on_off(sorted_pulses_start)
-    channel_list = get_all_channels(on_off_times)
-    merged_on_off = merge_channels(on_off_times, channel_list, sorted_pulses_start)
-    pulses_on_off = dict(sorted(merged_on_off.items(), key=lambda x: x))
+# for group in data["groups"]:
 
-###########----------------For_Sweeps----------------###########
-    # Sorts sweeps by start time
-    sorted_sweeps_start = sorted(
-        group["Sweeps"].items(), key=lambda x: (x[1]["Start"], x[1]["Initial_Width"], x[1]["Rising_Edge_Increment"], x[1]["Falling_Edge_Increment"])
-    )
-    sweeps_on = get_on_times(sorted_sweeps_start)
+# ###########----------------For_Pulses----------------###########
+#     # Sorts all Pulses by the start time
+#     sorted_pulses_start = sorted(
+#         group["Pulses"].items(), key=lambda x: (x[1]["Start"], x[1]["Duration"])
+#     )
+#     print(group["name"])
+#     on_off_times = get_on_off(sorted_pulses_start)
+#     channel_list = get_all_channels(on_off_times)
+#     merged_on_off = merge_channels(on_off_times, channel_list, sorted_pulses_start)
+#     pulses_on_off = dict(sorted(merged_on_off.items(), key=lambda x: x))
+#     print("-----------------Test-----------------")
+#     print(channel_list)
+#     print(on_off_times)
+#     print(sorted_pulses_start)
+#     print("--------------------------------------")
+#     print("Pulse Dic \n")
+#     pprint(add_delay(pulses_on_off, "Pulses"))
 
-###########----------------Combine_Commands----------------###########
-    final_command_dic = Merge(add_delay(pulses_on_off, "Pulses"), add_delay(sweeps_on, "Sweeps"))
+# ###########----------------For_Sweeps----------------###########
+#     # Sorts sweeps by start time
+#     sorted_sweeps_start = sorted(
+#         group["Sweeps"].items(), key=lambda x: (x[1]["Start"], x[1]["Initial_Width"], x[1]["Rising_Edge_Increment"], x[1]["Falling_Edge_Increment"])
+#     )
+#     sweeps_on = get_on_times(sorted_sweeps_start)
+#     print("Sweep Dic \n")
+#     pprint(add_delay(sweeps_on, "Sweeps"))
 
-# NOTE The function has been rewritten such that each group is considered as a module and the commands for each are generated in a file separately
-    print_sequence(pulses_on_off, group["name"])
-    # plot_pulses(group["Pulses"].items(), group["name"], group["Duration"], colors)
+# ###########----------------Combine_Commands----------------###########
+#     final_command_dic = Merge(add_delay(pulses_on_off, "Pulses"), add_delay(sweeps_on, "Sweeps"))
+#     print("Merged Dictionary \n")
+#     pprint(final_command_dic)
 
-script_gen(modules_path,templates_path, script_path, "test_script_4.py")
+# # NOTE The function has been rewritten such that each group is considered as a module and the commands for each are generated in a file separately
+#     print_sequence(pulses_on_off, group["name"])
+#     # plot_pulses(group["Pulses"].items(), group["name"], group["Duration"], colors)
+
+# script_gen(modules_path,templates_path, script_path, "test_script_5.py")
 

@@ -10,28 +10,47 @@
                 "Channels": [
                     "B0",
                     "B1"
-                ]
+                ],
+                "Tag": "B0, B1"
             }
         }, 
             "Sweeps": {
                 "Rabi_Sweep_1": {
-                    "Start": 1.0,
-                    "Initial_Width": 10,
+                    "Start": 11.0,
+                    "Sweep_Reg_Number": 1,
+                    "Rising_Edge_Delay": 0,
+                    "Falling_Edge_Delay": 0.01,
                     "Rising_Edge_Increment": 0.0,
-                    "Falling_Edge_Increment": 10,
+                    "Falling_Edge_Increment": 0.01,
                     "Channels": [
                         "B2",
                         "B3"
-                    ] 
+                    ],
+                    "Tag": "B2, B3" 
                 },
                 "Rabi_Sweep_2": {
                     "Start": 100.0,
-                    "Initial_Width": 10,
+                    "Sweep_Reg_Number": 2,
+                    "Rising_Edge_Delay": 0,
+                    "Falling_Edge_Delay": 0.01,
                     "Rising_Edge_Increment": 0.0,
-                    "Falling_Edge_Increment": 10,
+                    "Falling_Edge_Increment": 0.01,
                     "Channels": [
                         "B4"
-                    ] 
+                    ],
+                    "Tag": "B4" 
+                },
+                "Rabi_Sweep_3": {
+                    "Start": 200.0,
+                    "Sweep_Reg_Number": 3,
+                    "Rising_Edge_Delay": 0,
+                    "Falling_Edge_Delay": 0.01,
+                    "Rising_Edge_Increment": 0.0,
+                    "Falling_Edge_Increment": 0.01,
+                    "Channels": [
+                        "B5"
+                    ],
+                    "Tag": "B5" 
                 }
             }
         },
@@ -45,7 +64,8 @@
                     "Channels": [
                         "A6",
                         "A8"
-                    ]
+                    ],
+                "Tag": "A6, A8"
                 },
                 "OPF1": {
                     "Start": 921.5,
@@ -53,35 +73,32 @@
                     "Channels": [
                         "A9", 
                         "A0"
-                    ]
+                    ],
+                "Tag": "A9, A0"
                 },
                 "SD": {
                     "Start": 992.0,
                     "Duration": 7.5,
                     "Channels": [
                         "A7"
-                    ]
+                    ],
+                "Tag": "A7"
                 },
                 "Qutau Sync 1": {
                     "Start": 0.0,
                     "Duration": 10.0,
                     "Channels": [
                         "A0"
-                    ]
+                    ],
+                "Tag": "A0"
                 },
                 "Qutau Sync 2": {
                     "Start": 5.0,
                     "Duration": 10.0,
                     "Channels": [
                         "A0"
-                    ]
-                },
-                "Qutau Sync 4": {
-                    "Start": 20.0,
-                    "Duration": 110.0,
-                    "Channels": [
-                        "A11"
-                    ]
+                    ],
+                "Tag": "A0"
                 }
 
             },

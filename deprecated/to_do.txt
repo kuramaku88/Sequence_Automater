@@ -1,0 +1,20 @@
+With JSON
+- Implement sweep functionality, merge dictionaries from diff commands
+    - While merging commands take care of deadtime constraints - Done
+- Use the delay to offset the time and generate the sequence -
+- Add name tags and have it showup on the "hvis." commands - Kinda done
+
+Generate JSON from Xcel file 
+- Page 1 - A lookup table for all the channels
+- Page 2 - Pulse Sequence
+- Page 3 - Sweep Sequence
+
+Finish by end of the Week
+
+Reading
+- Andreas Reiserer PhD thesis 
+- Reiserer Rempe Review on Optical Cavities (APS)
+    - Cavity-based quantum networks with single atoms and optical photons
+        Andreas Reiserer and Gerhard Rempe
+        Rev. Mod. Phys. 87, 1379 – Published 1 December 2015 
+- PhD thesis of Stephan Welte
