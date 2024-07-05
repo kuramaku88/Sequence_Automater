@@ -1,0 +1,4 @@
+
+    hvis.end_sync_multi_sequence_block()
+
+    hvis.end_sync_while()

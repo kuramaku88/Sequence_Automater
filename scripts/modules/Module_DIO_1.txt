@@ -1,0 +1,8 @@
+### Commands for Module_DIO_1
+	hvis.dio_send_trigger('Turn on triggers', Module_DIO_1, ['A0', 'A6', 'A8'], 'on', 0.0)
+	hvis.dio_send_trigger('Turn off triggers', Module_DIO_1, ['A0'], 'off', 15000.0)
+	hvis.dio_send_trigger('Turn off triggers', Module_DIO_1, ['A6', 'A8'], 'off', 905500.0)
+	hvis.dio_send_trigger('Turn on triggers', Module_DIO_1, ['A0', 'A9'], 'on', 1000.0)
+	hvis.dio_send_trigger('Turn off triggers', Module_DIO_1, ['A0', 'A9'], 'off', 70000.0)
+	hvis.dio_send_trigger('Turn on triggers', Module_DIO_1, ['A7'], 'on', 500.0)
+	hvis.dio_send_trigger('Turn off triggers', Module_DIO_1, ['A7'], 'off', 7500.0)

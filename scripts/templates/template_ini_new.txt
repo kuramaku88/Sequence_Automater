@@ -1,0 +1,20 @@
+
+import wrapper.wrapper_hvi_sequence as hvis
+from sequences.system_parameters import *
+
+Counters_1 = {'channels': [2,3,4,5,6,7]}
+
+# Below we define the different parameters for the sweep
+total_length = 1e9
+single_gate_length = 1e6
+
+# Each increment corresponds to 10/3 ns (One cycle of 300 MHz)
+number_iterations = int(total_length / single_gate_length)
+
+def hvi_sequence():
+    # To initialise the sweep set Enable High
+    hvis.sync_multi_sequence_block("Initialising Sweep parameters", delay=500)
+    hvis.dio_sweep_initializer('Initialize LVDS Channels', Module_DIO1, lvds_start=8)
+    hvis.end_sync_multi_sequence_block()
+
+    hvis.sync_while("Eternal loop", Module_DIO1, "State", "GREATER_THAN_OR_EQUAL_TO", 0, delay=1000)
