@@ -1,0 +1,3 @@
+    hvis.end_sync_multi_sequence_block()
+    
+    hvis.sync_while_2registers("Gate loop", Module_DIO1, "gate", "LESS_THAN", number_iterations, Module_DIO1, "State", "EQUAL_TO", 0, delay=500)

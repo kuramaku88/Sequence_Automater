@@ -1,8 +1,7 @@
 {
-    "groups": [
+    "modules": [
         {
             "name": "Module_DIO_2",
-            "Duration": 1000,
             "Pulses": {
                 "FSTOT": {
                     "Start": 10.0,
@@ -56,7 +55,6 @@
         },
         {
             "name": "Module_DIO_1",
-            "Duration": 1000,
             "Pulses": {
                 "Cooling": {
                     "Start": 0.0,
@@ -99,6 +97,14 @@
                         "A0"
                     ],
                     "Tag": "Channel A0"
+                },
+                "Pulse_5": {
+                    "Start": 0.0,
+                    "Duration": 5.1,
+                    "Channels": [
+                        "A7"
+                    ],
+                    "Tag": "Channel A7"
                 }
             },
             "Sweeps": {}

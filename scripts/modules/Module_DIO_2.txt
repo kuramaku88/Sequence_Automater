@@ -1,6 +1,8 @@
 ### Commands for Module_DIO_2
-	hvis.dio_send_trigger('Turn on triggers', Module_DIO_2, ['B0', 'B1'], 'on', 10000.0)
-	hvis.dio_sweep('Sweeping ['B2', 'B3']', Module_DIO_2, ['B2', 'B3'], 1, 0, 0.01, 1000.0)
-	hvis.dio_sweep('Sweeping ['B4']', Module_DIO_2, ['B4'], 2, 0, 0.01, 89000)
-	hvis.dio_sweep('Sweeping ['B5']', Module_DIO_2, ['B5'], 3, 0, 0.01, 100000)
-	hvis.dio_send_trigger('Turn off triggers', Module_DIO_2, ['B0', 'B1'], 'off', 810000.0)
+	hvis.dio_send_trigger('Turn on triggers', Module_DIO_2, [6], 'on', 5000.0)
+	hvis.dio_send_trigger('Turn on triggers', Module_DIO_2, [0, 1], 'on', 5000.0)
+	hvis.dio_sweep('Sweeping [2, 3]', Module_DIO_2, [2, 3], 1, 0, 0.01, 1000.0)
+	hvis.dio_send_trigger('Turn off triggers', Module_DIO_2, [6], 'off', 4000.0)
+	hvis.dio_sweep('Sweeping [4]', Module_DIO_2, [4], 2, 0, 0.01, 85000.0)
+	hvis.dio_sweep('Sweeping [5]', Module_DIO_2, [5], 3, 0, 0.01, 100000)
+	hvis.dio_send_trigger('Turn off triggers', Module_DIO_2, [0, 1], 'off', 810000.0)

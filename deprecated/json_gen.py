@@ -2,15 +2,10 @@ import pandas as pd
 import json
 
 # Load the Excel file
-file_path = 'FPGA_Manager.xlsx'   # Replace with your file path
+file_path = 'FPGA_Manager.xlsx'  # Replace with your file path
 pulses_df = pd.read_excel(file_path, sheet_name='Pulses')
 sweeps_df = pd.read_excel(file_path, sheet_name='Sweeps')
 lookup_df = pd.read_excel(file_path, sheet_name='Channel Lookup')
-
-# Print the columns for debugging purposes
-print("Pulses columns:", pulses_df.columns)
-print("Sweeps columns:", sweeps_df.columns)
-print("Channel Lookup columns:", lookup_df.columns)
 
 # Ensure the expected column names are present
 expected_pulse_columns = ['Pulse Name', 'Start', 'Duration', 'Channel Names']
@@ -42,18 +37,21 @@ for _, lookup_row in lookup_df.iterrows():
 # Initialize the output JSON structure
 output_json = {"modules": []}
 
-# Function to get module and channels mapping from channel names
-def get_module_and_channels_mapping(channel_names):
-    module_channels = {}
+# Function to find the module name from channel names
+def find_module_from_channel_names(channel_names):
+    for channel_name in channel_names:
+        if channel_name in channel_name_to_module:
+            return channel_name_to_module[channel_name]
+    return None
+
+# Function to get channels from channel names
+def get_channels_from_channel_names(channel_names):
+    channels = []
     for channel_name in channel_names:
         if channel_name not in channel_name_to_channel:
             raise KeyError(f"Channel name '{channel_name}' not found in Channel Lookup sheet")
-        module_name = channel_name_to_module[channel_name]
-        channel = channel_name_to_channel[channel_name]
-        if module_name not in module_channels:
-            module_channels[module_name] = []
-        module_channels[module_name].append(channel)
-    return module_channels
+        channels.append(channel_name_to_channel[channel_name])
+    return channels
 
 # Construct a dictionary to hold module data temporarily
 module_data = {}
@@ -62,26 +60,28 @@ module_data = {}
 for _, pulse_row in pulses_df.iterrows():
     pulse_name = pulse_row['Pulse Name']
     channel_names = pulse_row['Channel Names'].split(', ')
-    module_channels = get_module_and_channels_mapping(channel_names)
+    module_name = find_module_from_channel_names(channel_names)
     
-    for module_name, channels in module_channels.items():
+    if module_name:
         if module_name not in module_data:
             module_data[module_name] = {"name": module_name, "Pulses": {}, "Sweeps": {}}
         
         module_data[module_name]['Pulses'][pulse_name] = {
             "Start": pulse_row['Start'],
             "Duration": pulse_row['Duration'],
-            "Channels": list(map(int, channels)),
-            "Tag": ', '.join([name for name in channel_names if channel_name_to_module[name] == module_name])
+            "Channels": get_channels_from_channel_names(channel_names),
+            "Tag": ', '.join(channel_names)
         }
+    else:
+        raise KeyError(f"No valid module found for pulse '{pulse_name}' with channels '{channel_names}'")
 
 # Populate sweeps
 for _, sweep_row in sweeps_df.iterrows():
     sweep_name = sweep_row['Sweep Name']
     channel_names = sweep_row['Channel Names'].split(', ')
-    module_channels = get_module_and_channels_mapping(channel_names)
+    module_name = find_module_from_channel_names(channel_names)
     
-    for module_name, channels in module_channels.items():
+    if module_name:
         if module_name not in module_data:
             module_data[module_name] = {"name": module_name, "Pulses": {}, "Sweeps": {}}
         
@@ -92,9 +92,11 @@ for _, sweep_row in sweeps_df.iterrows():
             "Falling_Edge_Delay": sweep_row['Falling Edge Delay'],
             "Rising_Edge_Increment": sweep_row['Rising Edge Increment'],
             "Falling_Edge_Increment": sweep_row['Falling Edge Increment'],
-            "Channels": list(map(int, channels)),
-            "Tag": ', '.join([name for name in channel_names if channel_name_to_module[name] == module_name])
+            "Channels": get_channels_from_channel_names(channel_names),
+            "Tag": ', '.join(channel_names)
         }
+    else:
+        raise KeyError(f"No valid module found for sweep '{sweep_name}' with channels '{channel_names}'")
 
 # Convert module_data to list for JSON output
 output_json['modules'] = list(module_data.values())
@@ -104,4 +106,4 @@ output_json_str = json.dumps(output_json, indent=4)
 with open('sequences_json/output_test.json', 'w') as json_file:
     json_file.write(output_json_str)
 
-print("JSON conversion completed successfully!")
+print("JSON conversion completed successfully! \n")

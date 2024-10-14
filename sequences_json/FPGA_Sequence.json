@@ -1,62 +1,62 @@
 {
-    "groups": [
+    "modules": [
         {
             "name": "Module_DIO_2",
-            "Duration": 1000.0,
+            "Duration": 1000,
             "Pulses": {
                 "FSTOT": {
-                "Start": 10.0,
-                "Duration": 1000.0,
-                "Channels": [
-                    "B0",
-                    "B1"
-                ],
-                "Tag": "B0, B1"
-            }
-        }, 
+                    "Start": 10.0,
+                    "Duration": 1000.0,
+                    "Channels": [
+                        "B0",
+                        "B1"
+                    ],
+                    "Tag": "Channel B0, Channel B1"
+                }
+            },
             "Sweeps": {
                 "Rabi_Sweep_1": {
-                    "Start": 11.0,
+                    "Start": 11,
                     "Sweep_Reg_Number": 1,
                     "Rising_Edge_Delay": 0,
                     "Falling_Edge_Delay": 0.01,
-                    "Rising_Edge_Increment": 0.0,
+                    "Rising_Edge_Increment": 0,
                     "Falling_Edge_Increment": 0.01,
                     "Channels": [
                         "B2",
                         "B3"
                     ],
-                    "Tag": "B2, B3" 
+                    "Tag": "Channel B2, Channel B3"
                 },
                 "Rabi_Sweep_2": {
-                    "Start": 100.0,
+                    "Start": 100,
                     "Sweep_Reg_Number": 2,
                     "Rising_Edge_Delay": 0,
                     "Falling_Edge_Delay": 0.01,
-                    "Rising_Edge_Increment": 0.0,
+                    "Rising_Edge_Increment": 0,
                     "Falling_Edge_Increment": 0.01,
                     "Channels": [
                         "B4"
                     ],
-                    "Tag": "B4" 
+                    "Tag": "Channel B4"
                 },
                 "Rabi_Sweep_3": {
-                    "Start": 200.0,
+                    "Start": 200,
                     "Sweep_Reg_Number": 3,
                     "Rising_Edge_Delay": 0,
                     "Falling_Edge_Delay": 0.01,
-                    "Rising_Edge_Increment": 0.0,
+                    "Rising_Edge_Increment": 0,
                     "Falling_Edge_Increment": 0.01,
                     "Channels": [
                         "B5"
                     ],
-                    "Tag": "B5" 
+                    "Tag": "Channel B5"
                 }
             }
         },
         {
             "name": "Module_DIO_1",
-            "Duration": 1000.0,
+            "Duration": 1000,
             "Pulses": {
                 "Cooling": {
                     "Start": 0.0,
@@ -65,16 +65,16 @@
                         "A6",
                         "A8"
                     ],
-                "Tag": "A6, A8"
+                    "Tag": "Channel A6, Channel A8"
                 },
                 "OPF1": {
                     "Start": 921.5,
                     "Duration": 70.0,
                     "Channels": [
-                        "A9", 
+                        "A9",
                         "A0"
                     ],
-                "Tag": "A9, A0"
+                    "Tag": "Channel A9, Channel A0"
                 },
                 "SD": {
                     "Start": 992.0,
@@ -82,7 +82,7 @@
                     "Channels": [
                         "A7"
                     ],
-                "Tag": "A7"
+                    "Tag": "Channel A7"
                 },
                 "Qutau Sync 1": {
                     "Start": 0.0,
@@ -90,7 +90,7 @@
                     "Channels": [
                         "A0"
                     ],
-                "Tag": "A0"
+                    "Tag": "Channel A0"
                 },
                 "Qutau Sync 2": {
                     "Start": 5.0,
@@ -98,13 +98,18 @@
                     "Channels": [
                         "A0"
                     ],
-                "Tag": "A0"
+                    "Tag": "Channel A0"
+                },
+                "Pulse_5": {
+                    "Start": 0.0,
+                    "Duration": 5.1,
+                    "Channels": [
+                        "A7"
+                    ],
+                    "Tag": "Channel A7"
                 }
-
             },
-            "Sweeps": {
-            }
-
+            "Sweeps": {}
         }
     ]
 }

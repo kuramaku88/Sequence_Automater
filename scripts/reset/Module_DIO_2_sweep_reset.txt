@@ -1,4 +1,4 @@
 ### Reset commands for Module_DIO_2
-test
-test
-test
+	hvis.dio_sweep_reset('Reset sweeping [2, 3]', Module_DIO_2, [2, 3], 1, 0, 0.01)
+	hvis.dio_sweep_reset('Reset sweeping [4]', Module_DIO_2, [4], 2, 0, 0.01)
+	hvis.dio_sweep_reset('Reset sweeping [5]', Module_DIO_2, [5], 3, 0, 0.01)
